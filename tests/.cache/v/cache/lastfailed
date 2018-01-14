@@ -1,0 +1,4 @@
+{
+  "test_bb84_qkd.py::TestBB84Receiving::test_receive_qubits": true,
+  "test_bb84_qkd.py::TestBB84Sending::test_send_to_receiver": true
+}
