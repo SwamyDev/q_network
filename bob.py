@@ -6,7 +6,7 @@ from tinyIpcLib.ipcCacClient import ipcCacClient
 
 def main():
     connection = CQCConnection('Bob')
-    q_channel = QChannel(connection, qubit, 'Alice')
+    q_channel = QChannel(connection, qubit, 'Eve')
     ca_channel = CAChannel(ipcCacClient('Bob'), 'Alice')
     node = BB84Node(q_channel, ca_channel, 0.0)
 
@@ -20,7 +20,10 @@ def main():
     error = node.calculate_error()
     print("Bob calculated error:", error)
     if error == 0.0:
+        node.receive_seed()
         k = node.privacy_amplification()
         print("Bob generated key:", k)
+
+    connection.close()
 
 main()

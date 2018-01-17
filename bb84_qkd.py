@@ -61,6 +61,9 @@ class BB84Node:
     def receive_test_values(self):
         self._other_test_values = self.ca_channel.receive()
 
+    def receive_seed(self):
+        self._seed = self.ca_channel.receive()
+
     def discard_states(self):
         def has_same_basis(pair):
             q, b = pair

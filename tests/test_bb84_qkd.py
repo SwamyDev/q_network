@@ -145,3 +145,9 @@ class TestBB84Receiving(unittest.TestCase):
         self.cac.received = [1, 1, 0, 0]
         self.node.receive_test_values()
         self.assertSequenceEqual(self.cac.received, self.node._other_test_values)
+
+    def test_receive_seed(self):
+        self.cac.received = [1, 0, 1, 0]
+        self.node.receive_seed()
+        self.assertSequenceEqual(self.cac.received, self.node._seed)
+
