@@ -6,7 +6,7 @@ from SimulaQron.cqc.pythonLib.cqc import CQCConnection, qubit
 def main():
     eve = CQCConnection('Eve')
     qvalues = []
-    for i in range(100):
+    for i in range(1000):
         q = eve.recvQubit()
         b = random.randint(0, 1)
         if b == 1:
