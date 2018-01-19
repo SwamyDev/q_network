@@ -16,21 +16,35 @@ class QConnectionSpy:
 class CACConnectionSpy:
     def __init__(self):
         self.receiver = ''
+        self.sender = ''
         self.sent_data = None
-        self.operations = []
+        self.received_get_call = False
+        self.received_clear_call = False
+        self.received_close_call = False
+        self.received_send_ack_call = False
+        self.received_get_ack_call = False
 
-    def sendClassical(self, receiver, data):
+    def sendValueList(self, receiver, data):
         self.receiver = receiver
         self.sent_data = data
 
-    def startClassicalServer(self):
-        self.operations.append('startClassicalServer')
+    def getValueList(self, sender):
+        self.sender = sender
+        self.received_get_call = True
 
-    def recvClassical(self):
-        self.operations.append('recvClassical')
+    def sendAck(self, receiver):
+        self.receiver = receiver
+        self.received_send_ack_call = True
 
-    def closeClassicalServer(self):
-        self.operations.append('closeClassicalServer')
+    def getAck(self, sender):
+        self.sender = sender
+        self.received_get_ack_call = True
+
+    def clearServer(self):
+        self.received_clear_call = True
+
+    def closeChannel(self):
+        self.received_close_call = True
 
 
 class QubitSpy:
@@ -88,7 +102,7 @@ class TestQChannel(unittest.TestCase):
         self.assertSequenceEqual([QState(0, 0), QState(0, 1), QState(1, 0), QState(1, 1)]
                                  , qc.measure_qubits([0, 1, 0, 1]))
 
-    def test_received_quibits_are_measured_in_correct_basis(self):
+    def test_received_qubits_are_measured_in_correct_basis(self):
         connection = ConnectionStub([QubitMock(0), QubitMock(0)])
         qc = QChannel(connection, make_qubit_spy, 'Alice')
         qc.measure_qubits([0, 1])
@@ -97,16 +111,51 @@ class TestQChannel(unittest.TestCase):
 
 
 class TestCAC(unittest.TestCase):
-    def test_sending_data(self):
+    def test_sending_list_data(self):
         connection = CACConnectionSpy()
         ca = CAChannel(connection, 'Bob')
         ca.send([1, 2])
         self.assertSequenceEqual([1, 2], connection.sent_data)
         self.assertEqual('Bob', connection.receiver)
 
+    def test_sending_single_int(self):
+        connection = CACConnectionSpy()
+        ca = CAChannel(connection, 'Bob')
+        ca.send(42)
+        self.assertSequenceEqual([42], connection.sent_data)
+        self.assertEqual('Bob', connection.receiver)
+
     def test_receiving_data(self):
         connection = CACConnectionSpy()
         ca = CAChannel(connection, 'Alice')
         ca.receive()
-        self.assertTrue(['startClassicalServer', 'recvClassical', 'closeClassicalServer'],
-                        connection.operations)
+        self.assertTrue(connection.received_get_call)
+        self.assertEqual('Alice', connection.sender)
+
+    def test_send_acknowledgement(self):
+        connection = CACConnectionSpy()
+        ca = CAChannel(connection, 'Alice')
+        ca.send_ack()
+        self.assertTrue(connection.received_send_ack_call)
+        self.assertEqual('Alice', connection.receiver)
+
+    def test_receive_acknowledgement(self):
+        connection = CACConnectionSpy()
+        ca = CAChannel(connection, 'Bob')
+        ca.receive_ack()
+        self.assertTrue(connection.received_get_ack_call)
+        self.assertEqual('Bob', connection.sender)
+
+
+    def test_clear(self):
+        connection = CACConnectionSpy()
+        ca = CAChannel(connection, 'Alice')
+        ca.clear()
+        self.assertTrue(connection.received_clear_call)
+
+    def test_close(self):
+        connection = CACConnectionSpy()
+        ca = CAChannel(connection, 'Alice')
+        ca.close()
+        self.assertTrue(connection.received_close_call)
+

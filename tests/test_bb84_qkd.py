@@ -4,14 +4,6 @@ from QNetwork.bb84_qkd import BB84Node, BB84SenderNode, BB84ReceiverNode
 from QNetwork.q_network import QState
 
 
-class QChannelDummy:
-    pass
-
-
-class CACDummy:
-    pass
-
-
 class QChannelSpy:
     def __init__(self):
         self.qubits_sent = []
@@ -62,18 +54,10 @@ class TestBB84Sending(unittest.TestCase):
         self.node._send_test_values()
         self.assertSequenceEqual([1, 0], self.cac.data_sent)
 
-    def test_send_amplification_seed(self):
-        self.node._qstates = [QState(1, 0), QState(1, 0), QState(0, 0), QState(1, 0), QState(0, 0)]
-        self.node._test_set = {0, 2}
-        self.node._send_seed()
-        self.assertSequenceEqual(self.node._seed, self.cac.data_sent)
-
 
 class TestBB84Operations(unittest.TestCase):
     def setUp(self):
-        self.qc = QChannelDummy()
-        self.cac = CACDummy()
-        self.node = BB84Node(self.qc, self.cac)
+        self.node = BB84Node(None, None)
 
     def test_discard_invalid_states(self):
         self.node._other_bases = [1, 1, 0, 0]
@@ -117,29 +101,22 @@ class TestBB84Receiving(unittest.TestCase):
         self.assertSequenceEqual(self.qc.received, self.node._qstates)
         self.assertEqual(3, len(self.qc.requested_bases))
 
-    def test_receive_test_set(self):
-        self.cac.received = [0, 1]
-        self.node._receive_test_set()
-        self.assertEqual({0, 1}, self.node._test_set)
-
     def test_receive_test_values(self):
         self.cac.received = [1, 1, 0, 0]
         self.node._receive_test_values()
         self.assertSequenceEqual(self.cac.received, self.node._other_test_values)
 
-    def test_receive_seed(self):
-        self.cac.received = [1, 0, 1, 0]
-        self.node._receive_seed()
-        self.assertSequenceEqual(self.cac.received, self.node._seed)
-
 
 class BB84SenderNodeSpy(BB84SenderNode):
-    def __init__(self, q_channel, ca_channel):
-        super().__init__(q_channel, ca_channel, None)
+    def __init__(self):
+        super().__init__(None, None, None)
         self.operations = []
 
     def _send_q_states(self, amount):
         self.operations.append("_send_q_states")
+
+    def _receive_ack(self):
+        self.operations.append("_receive_ack")
 
     def _share_bases(self):
         self.operations.append("_share_bases")
@@ -166,32 +143,35 @@ class BB84SenderNodeSpy(BB84SenderNode):
         self.operations.append("_privacy_amplification")
 
 
-class TestBB84SenderOperations(unittest.TestCase):
+class TestBB84SenderFlow(unittest.TestCase):
     def setUp(self):
-        self.node = BB84SenderNodeSpy(QChannelDummy(), CACDummy())
+        self.node = BB84SenderNodeSpy()
 
     def test_share_q_states(self):
         self.node.share_q_states()
-        self.assertSequenceEqual(["_send_q_states", "_share_bases"], self.node.operations)
+        self.assertSequenceEqual(["_send_q_states", "_receive_ack", "_share_bases"], self.node.operations)
 
-    def test_sender_get_error(self):
+    def test_get_error(self):
         self.node.get_error()
         self.assertSequenceEqual(
             ["_discard_states", "_send_test_set", "_send_test_values", "_receive_test_values", "_calculate_error"],
             self.node.operations)
 
-    def test_sender_generate_key(self):
+    def test_generate_key(self):
         self.node.generate_key()
         self.assertSequenceEqual(["_send_seed", "_privacy_amplification"], self.node.operations)
 
 
 class BB84ReceiverNodeSpy(BB84ReceiverNode):
-    def __init__(self, q_channel, ca_channel):
-        super().__init__(q_channel, ca_channel)
+    def __init__(self):
+        super().__init__(None, None)
         self.operations = []
 
     def _receive_q_states(self):
         self.operations.append("_receive_q_states")
+
+    def _send_ack(self):
+        self.operations.append("_send_ack")
 
     def _share_bases(self):
         self.operations.append("_share_bases")
@@ -218,20 +198,20 @@ class BB84ReceiverNodeSpy(BB84ReceiverNode):
         self.operations.append("_privacy_amplification")
 
 
-class TestBB84ReceiverOperations(unittest.TestCase):
+class TestBB84ReceiverFlow(unittest.TestCase):
     def setUp(self):
-        self.node = BB84ReceiverNodeSpy(QChannelDummy(), CACDummy())
+        self.node = BB84ReceiverNodeSpy()
 
     def test_share_q_states(self):
         self.node.share_q_states()
-        self.assertSequenceEqual(["_receive_q_states", "_share_bases"], self.node.operations)
+        self.assertSequenceEqual(["_receive_q_states", "_send_ack", "_share_bases"], self.node.operations)
 
-    def test_sender_get_error(self):
+    def test_get_error(self):
         self.node.get_error()
         self.assertSequenceEqual(
             ["_discard_states", "_receive_test_set", "_send_test_values", "_receive_test_values", "_calculate_error"],
             self.node.operations)
 
-    def test_sender_generate_key(self):
+    def test_generate_key(self):
         self.node.generate_key()
         self.assertSequenceEqual(["_receive_seed", "_privacy_amplification"], self.node.operations)

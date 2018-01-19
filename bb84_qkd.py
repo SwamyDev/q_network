@@ -21,22 +21,11 @@ class BB84Node(QKDNode):
         self._test_values = [self._qstates[i].value for i in self._test_set]
         self.ca_channel.send(self._test_values)
 
-    def _send_seed(self):
-        m = len(self._qstates) - len(self._test_set)
-        self._seed = self._gen_random_string(m)
-        self.ca_channel.send(self._seed)
-
     def _measure_qstates(self, amount):
         self._qstates = self.q_channel.measure_qubits(self._gen_random_string(amount))
 
-    def _receive_test_set(self):
-        self._test_set = set(self.ca_channel.receive())
-
     def _receive_test_values(self):
         self._other_test_values = self.ca_channel.receive()
-
-    def _receive_seed(self):
-        self._seed = self.ca_channel.receive()
 
     def _discard_states(self):
         def has_same_basis(pair):
@@ -46,14 +35,11 @@ class BB84Node(QKDNode):
         self._qstates = [q for q, _ in filter(has_same_basis, zip(self._qstates, self._other_bases))]
 
     def _calculate_error(self):
-        t = len(self._test_values)
-        w = sum(a != b for a, b in zip(self._test_values, self._other_test_values))
-        return w / t
+        return self._calculate_matching_error_of_values(self._test_values, self._other_test_values)
 
     def _privacy_amplification(self):
         indices = set(range(len(self._qstates))) - self._test_set
-        x = [self._qstates[i].value for i in indices]
-        return self._extract_key(x, self._seed)
+        return self._calc_privacy_amplification_of(indices)
 
 
 class BB84SenderNode(BB84Node):
@@ -63,6 +49,7 @@ class BB84SenderNode(BB84Node):
 
     def share_q_states(self):
         self._send_q_states(self.n)
+        self._receive_ack()
         self._share_bases()
 
     def get_error(self):
@@ -83,6 +70,7 @@ class BB84ReceiverNode(BB84Node):
 
     def share_q_states(self):
         self._receive_q_states()
+        self._send_ack()
         self._share_bases()
 
     def get_error(self):

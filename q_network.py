@@ -38,18 +38,24 @@ class QChannel:
 
 
 class CAChannel:
-    def __init__(self, connection, receiver):
+    def __init__(self, connection, other):
         self._connection = connection
-        self._receiver = receiver
+        self._other = other
 
     def send(self, data):
         if not isinstance(data, list):
             data = [data]
-        self._connection.sendValueList(self._receiver, data)
+        self._connection.sendValueList(self._other, data)
+
+    def send_ack(self):
+        self._connection.sendAck(self._other)
 
     def receive(self):
-        data = self._connection.getValueList(self._receiver)
+        data = self._connection.getValueList(self._other)
         return data
+
+    def receive_ack(self):
+        self._connection.getAck(self._other)
 
     def clear(self):
         self._connection.clearServer()

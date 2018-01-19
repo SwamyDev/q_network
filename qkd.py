@@ -29,6 +29,14 @@ class QKDNode(ABC):
 
         self.ca_channel.send(list(self._test_set))
 
+    def _send_seed(self):
+        m = len(self._qstates) - len(self._test_set)
+        self._seed = self._gen_random_string(m)
+        self.ca_channel.send(self._seed)
+
+    def _send_ack(self):
+        self.ca_channel.send_ack()
+
     def _receive_q_states(self):
         amount = self.ca_channel.receive()[0]
         self._measure_qstates(amount)
@@ -40,6 +48,15 @@ class QKDNode(ABC):
     def _receive_bases(self):
         self._other_bases = self.ca_channel.receive()
 
+    def _receive_seed(self):
+        self._seed = self.ca_channel.receive()
+
+    def _receive_test_set(self):
+        self._test_set = set(self.ca_channel.receive())
+
+    def _receive_ack(self):
+        self.ca_channel.receive_ack()
+
     @staticmethod
     def _extract_key(x, seed):
         return sum(map(operator.mul, x, seed)) % 2
@@ -47,3 +64,13 @@ class QKDNode(ABC):
     @staticmethod
     def _gen_random_string(size, up_to=1):
         return [random.randint(0, up_to) for _ in range(size)]
+
+    @staticmethod
+    def _calculate_matching_error_of_values(lhs, rhs):
+        t = len(lhs)
+        w = sum(a != b for a, b in zip(lhs, rhs))
+        return w / t
+
+    def _calc_privacy_amplification_of(self, indices):
+        x = [self._qstates[i].value for i in indices]
+        return self._extract_key(x, self._seed)
