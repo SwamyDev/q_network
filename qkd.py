@@ -1,3 +1,6 @@
+import operator
+
+
 class QKDNode:
     def __init__(self, ca_channel):
         self.ca_channel = ca_channel
@@ -13,3 +16,7 @@ class QKDNode:
 
     def _receive_bases(self):
         self._other_bases = self.ca_channel.receive()
+
+    @staticmethod
+    def _extract_key(x, seed):
+        return sum(map(operator.mul, x, seed)) % 2

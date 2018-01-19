@@ -1,4 +1,3 @@
-import operator
 import random
 
 from QNetwork.q_network import QState
@@ -71,8 +70,7 @@ class BB84Node(QKDNode):
     def _privacy_amplification(self):
         indices = set(range(len(self._qstates))) - self._test_set
         x = [self._qstates[i].value for i in indices]
-        k = sum(map(operator.mul, x, self._seed)) % 2
-        return k
+        return self._extract_key(x, self._seed)
 
 
 class BB84SenderNode(BB84Node):

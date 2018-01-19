@@ -28,3 +28,13 @@ class TestQKDCommonFunctions(unittest.TestCase):
         node._share_bases()
         self.assertSequenceEqual([0, 1, 0, 1], node._other_bases)
         self.assertTrue(cac.send_was_called)
+
+    def test_simple_extractor_returns_zero_bit(self):
+        self.assert_extract_bit(0, [1, 1, 1], [1, 1, 0])
+
+    def assert_extract_bit(self, expected, x, seed):
+        node = QKDNode(None)
+        self.assertEqual(expected, node._extract_key(x, seed))
+
+    def test_privacy_amplification_odd(self):
+        self.assert_extract_bit(1, [1, 1, 1], [1, 1, 1])
