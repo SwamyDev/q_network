@@ -16,7 +16,7 @@ class QChannelSpy:
     def __init__(self):
         self.qubits_sent = []
 
-    def send(self, qubits):
+    def send_qubits(self, qubits):
         self.qubits_sent = qubits
 
 
@@ -33,7 +33,7 @@ class QChannelStub:
         self.requested_bases = None
         self.received = None
 
-    def receive(self, bases):
+    def measure_qubits(self, bases):
         self.requested_bases = bases
         return self.received
 
@@ -52,18 +52,9 @@ class TestBB84Sending(unittest.TestCase):
         self.cac = CACSpy()
         self.node = BB84Node(self.qc, self.cac)
 
-    def test_share_n(self):
-        self.node._send_q_states(42)
-        self.assertEqual(42, self.cac.data_sent)
-
     def test_send_bb84_states(self):
         self.node._send_q_states(42)
         self.assertSequenceEqual(self.node._qstates, self.qc.qubits_sent)
-
-    def test_send_test_set(self):
-        self.node._qstates = [QState(1, 0)] * 15
-        self.node._send_test_set()
-        self.assertEqual(7, len(self.cac.data_sent))
 
     def test_send_test_values(self):
         self.node._qstates = [QState(1, 0), QState(1, 0), QState(0, 0), QState(1, 0)]

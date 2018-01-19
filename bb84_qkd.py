@@ -1,5 +1,3 @@
-import random
-
 from QNetwork.q_network import QState
 from QNetwork.qkd import QKDNode
 
@@ -9,29 +7,15 @@ class BB84Node(QKDNode):
         super().__init__(ca_channel)
         self.q_channel = q_channel
 
-        self._test_set = set()
         self._test_values = []
         self._other_test_values = []
         self._seed = []
 
     def _send_q_states(self, amount):
-        self.ca_channel.send(amount)
+        super()._send_q_states(amount)
         self._qstates = [QState(value, basis) for value, basis in zip(self._gen_random_string(amount),
                                                                       self._gen_random_string(amount))]
-        self.q_channel.send(self._qstates)
-
-    @staticmethod
-    def _gen_random_string(size):
-        return [random.randint(0, 1) for _ in range(size)]
-
-    def _send_test_set(self):
-        s = len(self._qstates)
-        t = s // 2
-        self._test_set = set()
-        while len(self._test_set) < t:
-            self._test_set.add(random.randint(0, s - 1))
-
-        self.ca_channel.send(list(self._test_set))
+        self.q_channel.send_qubits(self._qstates)
 
     def _send_test_values(self):
         self._test_values = [self._qstates[i].value for i in self._test_set]
@@ -42,9 +26,8 @@ class BB84Node(QKDNode):
         self._seed = self._gen_random_string(m)
         self.ca_channel.send(self._seed)
 
-    def _receive_q_states(self):
-        n = self.ca_channel.receive()[0]
-        self._qstates = self.q_channel.receive(self._gen_random_string(n))
+    def _measure_qstates(self, amount):
+        self._qstates = self.q_channel.measure_qubits(self._gen_random_string(amount))
 
     def _receive_test_set(self):
         self._test_set = set(self.ca_channel.receive())

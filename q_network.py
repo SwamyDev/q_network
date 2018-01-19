@@ -16,7 +16,7 @@ class QChannel:
         self._qubit_factory = qubit_factory
         self._receiver = receiver
 
-    def send(self, qstates):
+    def send_qubits(self, qstates):
         for qs in qstates:
             q = self._qubit_factory(self._connection)
             if qs.value == 1:
@@ -26,7 +26,7 @@ class QChannel:
 
             self._connection.sendQubit(q, self._receiver)
 
-    def receive(self, bases):
+    def measure_qubits(self, bases):
         qstates = []
         for b in bases:
             q = self._connection.recvQubit()

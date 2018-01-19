@@ -75,7 +75,7 @@ class TestQChannel(unittest.TestCase):
     def test_sending_qubits(self):
         connection = QConnectionSpy()
         qc = QChannel(connection, make_qubit_spy, 'Bob')
-        qc.send([QState(0, 0), QState(0, 1), QState(1, 0), QState(1, 1)])
+        qc.send_qubits([QState(0, 0), QState(0, 1), QState(1, 0), QState(1, 1)])
         self.assertEqual('Bob', connection.receiver)
         self.assertEqual([], connection.sent_qubits[0].operations)
         self.assertEqual(['H'], connection.sent_qubits[1].operations)
@@ -86,12 +86,12 @@ class TestQChannel(unittest.TestCase):
         connection = ConnectionStub([QubitMock(0), QubitMock(0), QubitMock(1), QubitMock(1)])
         qc = QChannel(connection, make_qubit_spy, 'Alice')
         self.assertSequenceEqual([QState(0, 0), QState(0, 1), QState(1, 0), QState(1, 1)]
-                                 , qc.receive([0, 1, 0, 1]))
+                                 , qc.measure_qubits([0, 1, 0, 1]))
 
     def test_received_quibits_are_measured_in_correct_basis(self):
         connection = ConnectionStub([QubitMock(0), QubitMock(0)])
         qc = QChannel(connection, make_qubit_spy, 'Alice')
-        qc.receive([0, 1])
+        qc.measure_qubits([0, 1])
         self.assertEqual(False, connection.received_qubits[0].is_hadamard)
         self.assertEqual(True, connection.received_qubits[1].is_hadamard)
 
