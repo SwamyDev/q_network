@@ -1,7 +1,7 @@
 import random
 import unittest
 
-from QNetwork.q_network import QState
+from QNetwork.q_network_util import QState
 from QNetwork.qkd import QKDNode
 
 

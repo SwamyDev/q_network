@@ -1,6 +1,6 @@
 from functools import reduce
 
-from QNetwork.q_network import ChannelFactory
+from QNetwork.q_network_util import ChannelFactory
 
 START_KEY_GENERATION_TAG = "SKey"
 END_KEY_GENERATION_TAG = "EKey"

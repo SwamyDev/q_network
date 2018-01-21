@@ -2,7 +2,7 @@ import random
 import unittest
 
 from QNetwork.diqkd import DIQKDNode, DIQKDSenderNode, DIQKDReceiverNode
-from QNetwork.q_network import QState
+from QNetwork.q_network_util import QState
 
 
 class QChannelDummy:
