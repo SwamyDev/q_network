@@ -25,7 +25,7 @@ class QChannelStub:
         self.requested_bases = None
         self.received = None
 
-    def measure_qubits(self, bases):
+    def receive_qubits_in(self, bases):
         self.requested_bases = bases
         return self.received
 

@@ -58,10 +58,6 @@ class QKDNode(ABC):
         self.ca_channel.receive_ack()
 
     @staticmethod
-    def _extract_key(x, seed):
-        return sum(map(operator.mul, x, seed)) % 2
-
-    @staticmethod
     def _gen_random_string(size, up_to=1):
         return [random.randint(0, up_to) for _ in range(size)]
 
@@ -74,3 +70,7 @@ class QKDNode(ABC):
     def _calc_privacy_amplification_of(self, indices):
         x = [self._qstates[i].value for i in indices]
         return self._extract_key(x, self._seed)
+
+    @staticmethod
+    def _extract_key(x, seed):
+        return sum(map(operator.mul, x, seed)) % 2

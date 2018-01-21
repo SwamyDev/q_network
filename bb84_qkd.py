@@ -22,7 +22,7 @@ class BB84Node(QKDNode):
         self.ca_channel.send(self._test_values)
 
     def _measure_qstates(self, amount):
-        self._qstates = self.q_channel.measure_qubits(self._gen_random_string(amount))
+        self._qstates = self.q_channel.receive_qubits_in(self._gen_random_string(amount))
 
     def _receive_test_values(self):
         self._other_test_values = self.ca_channel.receive()

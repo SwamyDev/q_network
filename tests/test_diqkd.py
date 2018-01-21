@@ -5,11 +5,18 @@ from QNetwork.diqkd import DIQKDNode, DIQKDSenderNode, DIQKDReceiverNode
 from QNetwork.q_network import QState
 
 
+class QChannelDummy:
+    pass
+
+
 class QChannelSpy:
     def __init__(self):
         self.received_bases = []
 
-    def measure_entangled(self, bases):
+    def send_epr(self, bases):
+        self.received_bases = bases
+
+    def receive_epr_in(self, bases):
         self.received_bases = bases
 
 
@@ -20,6 +27,9 @@ class CACStub:
     def receive(self):
         return self.received
 
+    def send(self, data):
+        pass
+
 
 class CACSpy:
     def __init__(self):
@@ -29,11 +39,19 @@ class CACSpy:
         self.data_sent = data
 
 
+class QubitSpy:
+    def __init__(self):
+        self.rotation_steps = 0
+
+    def rot_Y(self, step):
+        self.rotation_steps = step
+
+
 class TestDIQKDEntangledSharing(unittest.TestCase):
     def setUp(self):
         self.qc = QChannelSpy()
         self.cac = CACStub()
-        self.node = DIQKDNode(self.qc, self.cac)
+        self.node = DIQKDNode(self.qc, self.cac, 0)
 
     def test_send_entangled_states(self):
         random.seed(42)
@@ -50,7 +68,7 @@ class TestDIQKDEntangledSharing(unittest.TestCase):
 class TestDIQKDSending(unittest.TestCase):
     def setUp(self):
         self.cac = CACSpy()
-        self.node = DIQKDNode(None, self.cac)
+        self.node = DIQKDNode(None, self.cac, 0)
 
     def test_send_chsh_values(self):
         self.node._qstates = [QState(1, 0), QState(0, 1), QState(0, 0), QState(1, 1)]
@@ -69,7 +87,7 @@ class TestDIQKDSending(unittest.TestCase):
 
 class TestDIQKDCommonOperations(unittest.TestCase):
     def setUp(self):
-        self.node = DIQKDNode(None, None)
+        self.node = DIQKDNode(None, None, 0.1)
 
     def test_calculate_win_probability(self):
         self.node._qstates = [QState(1, 0), QState(0, 1), QState(1, 1), QState(0, 1), QState(0, 0)]
@@ -83,6 +101,18 @@ class TestDIQKDCommonOperations(unittest.TestCase):
         self.node._match_test_values = [1, 0, 0, 1]
         self.node._other_match_test_values = [1, 1, 0, 1]
         self.assertAlmostEqual(0.25, self.node._calculate_match_error())
+
+    def test_pwin_outside_error_bound(self):
+        self.assertTrue(self.node._is_outside_error_bound(0.75, 1.0))
+
+    def test_pwin_inside_error_bound(self):
+        self.assertFalse(self.node._is_outside_error_bound(0.85, 1.0))
+
+    def test_match_outside_error_bound(self):
+        self.assertTrue(self.node._is_outside_error_bound(0.85, 0.8))
+
+    def test_match_inside_error_bound(self):
+        self.assertFalse(self.node._is_outside_error_bound(0.85, 0.95))
 
     def test_privacy_amplification_even(self):
         self.node._qstates = [QState(1, 0), QState(1, 0), QState(0, 0), QState(1, 0), QState(1, 0)]
@@ -99,7 +129,7 @@ class TestDIQKDCommonOperations(unittest.TestCase):
 
 class TestDIQKDSenderOperations(unittest.TestCase):
     def setUp(self):
-        self.node = DIQKDSenderNode(None, None, None)
+        self.node = DIQKDSenderNode(None, None, 0, None)
 
     def test_subset_separation(self):
         self.node._other_bases = [1, 0, 2, 0, 2, 2]
@@ -116,7 +146,21 @@ class TestDIQKDSenderOperations(unittest.TestCase):
 
 class TestDIQKDReceiverOperations(unittest.TestCase):
     def setUp(self):
-        self.node = DIQKDReceiverNode(None, None)
+        self.qc = QChannelDummy()
+        self.node = DIQKDReceiverNode(self.qc, None, 0)
+
+    def test_has_correct_bases_mapping(self):
+        q1 = QubitSpy()
+        self.node.q_channel.bases_mapping[0](q1)
+        self.assertEqual(128+32, q1.rotation_steps)
+
+        q2 = QubitSpy()
+        self.node.q_channel.bases_mapping[1](q2)
+        self.assertEqual(32, q2.rotation_steps)
+
+        q3 = QubitSpy()
+        self.node.q_channel.bases_mapping[2](q3)
+        self.assertEqual(0, q3.rotation_steps)
 
     def test_subset_separation(self):
         self.node._other_bases = [1, 0, 0, 0, 1, 0]
@@ -134,7 +178,7 @@ class TestDIQKDReceiverOperations(unittest.TestCase):
 class TestDIQKDReceiving(unittest.TestCase):
     def setUp(self):
         self.cac = CACStub()
-        self.node = DIQKDNode(None, self.cac)
+        self.node = DIQKDNode(None, self.cac, 0)
 
     def test_receive_chsh_values(self):
         self.cac.received = [1, 1, 0, 0]
@@ -149,7 +193,7 @@ class TestDIQKDReceiving(unittest.TestCase):
 
 class DIQKDSenderNodeSpy(DIQKDSenderNode):
     def __init__(self):
-        super().__init__(None, None, None)
+        super().__init__(None, None, None, 0)
         self.operations = []
 
     def _send_q_states(self, amount):
@@ -185,6 +229,9 @@ class DIQKDSenderNodeSpy(DIQKDSenderNode):
     def _calculate_match_error(self):
         self.operations.append("_calculate_match_error")
 
+    def _is_outside_error_bound(self, win_prob, matching_error):
+        self.operations.append("_is_outside_error_bound")
+
     def _send_seed(self):
         self.operations.append("_send_seed")
 
@@ -210,7 +257,8 @@ class TestDIQKDSenderFlow(unittest.TestCase):
              "_send_match_test_values",
              "_receive_match_test_values",
              "_calculate_winning_probability",
-             "_calculate_match_error"],
+             "_calculate_match_error",
+             "_is_outside_error_bound"],
             self.node.operations)
 
     def test_generate_key(self):
@@ -220,7 +268,7 @@ class TestDIQKDSenderFlow(unittest.TestCase):
 
 class DIQKDReceiverNodeSpy(DIQKDReceiverNode):
     def __init__(self):
-        super().__init__(None, None)
+        super().__init__(QChannelDummy(), None, 0)
         self.operations = []
 
     def _receive_q_states(self):
@@ -256,6 +304,9 @@ class DIQKDReceiverNodeSpy(DIQKDReceiverNode):
     def _calculate_match_error(self):
         self.operations.append("_calculate_match_error")
 
+    def _is_outside_error_bound(self, win_prob, matching_error):
+        self.operations.append("_is_outside_error_bound")
+
     def _receive_seed(self):
         self.operations.append("_receive_seed")
 
@@ -281,9 +332,10 @@ class TestDIQKDReceiverFlow(unittest.TestCase):
              "_send_match_test_values",
              "_receive_match_test_values",
              "_calculate_winning_probability",
-             "_calculate_match_error"],
+             "_calculate_match_error",
+             "_is_outside_error_bound"],
             self.node.operations)
 
-    def test_sender_generate_key(self):
+    def test_generate_key(self):
         self.node.generate_key()
         self.assertSequenceEqual(["_receive_seed", "_privacy_amplification"], self.node.operations)

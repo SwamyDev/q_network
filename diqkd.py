@@ -1,12 +1,15 @@
 import operator
 
+import math
+
 from QNetwork.qkd import QKDNode
 
 
 class DIQKDNode(QKDNode):
-    def __init__(self, q_channel, ca_channel):
+    def __init__(self, q_channel, ca_channel, error):
         super().__init__(ca_channel)
         self.q_channel = q_channel
+        self.error = error
         self._chsh_test_set = set()
         self._match_test_set = set()
         self._raw_key_set = set()
@@ -16,8 +19,8 @@ class DIQKDNode(QKDNode):
         self._other_match_test_values = []
 
     def _send_q_states(self, amount):
-        super().__init__(amount)
-        self._qstates = self.q_channel.measure_entangled(self._gen_random_string(amount))
+        super()._send_q_states(amount)
+        self._qstates = self.q_channel.send_epr(self._gen_random_string(amount))
 
     def _send_chsh_test_values(self):
         self._chsh_test_values = self._get_and_send_values_from_test_set(self._chsh_test_set)
@@ -31,7 +34,8 @@ class DIQKDNode(QKDNode):
         self._match_test_values = self._get_and_send_values_from_test_set(self._match_test_set)
 
     def _measure_qstates(self, amount):
-        self._qstates = self.q_channel.measure_entangled(self._gen_random_string(amount, up_to=2))
+        print('Bob amount', amount)
+        self._qstates = self.q_channel.receive_epr_in(self._gen_random_string(amount, up_to=2))
 
     def _receive_chsh_test_values(self):
         self._other_chsh_test_values = self.ca_channel.receive()
@@ -75,13 +79,17 @@ class DIQKDNode(QKDNode):
         self._receive_chsh_test_values()
         self._send_match_test_values()
         self._receive_match_test_values()
-        self._calculate_winning_probability()
-        self._calculate_match_error()
+        self.win_prob = self._calculate_winning_probability()
+        self.matching_error = self._calculate_match_error()
+        return self._is_outside_error_bound(self.win_prob, self.matching_error)
+
+    def _is_outside_error_bound(self, win_prob, matching_error):
+        return (win_prob < (0.5 + (1 / (2 * math.sqrt(2)))) - self.error) or (matching_error < 1.0 - self.error)
 
 
 class DIQKDSenderNode(DIQKDNode):
-    def __init__(self, q_channel, ca_channel, n):
-        super().__init__(q_channel, ca_channel)
+    def __init__(self, q_channel, ca_channel, error, n):
+        super().__init__(q_channel, ca_channel, error)
         self.n = n
 
     def _is_chsh_test(self, index):
@@ -105,8 +113,9 @@ class DIQKDSenderNode(DIQKDNode):
 
 
 class DIQKDReceiverNode(DIQKDNode):
-    def __init__(self, q_channel, ca_channel):
-        super().__init__(q_channel, ca_channel)
+    def __init__(self, q_channel, ca_channel, error, step):
+        q_channel.bases_mapping = [lambda q: q.rot_Y(128+step, print_info=False), lambda q: q.rot_Y(step, print_info=False), lambda q: None]
+        super().__init__(q_channel, ca_channel, error)
 
     def _is_chsh_test(self, index):
         return self._qstates[index].basis < 2
