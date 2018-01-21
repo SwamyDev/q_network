@@ -1,7 +1,7 @@
 import random
 import unittest
 
-from QNetwork.q_network import QState
+from QNetwork.q_network_impl import QState
 from QNetwork.qkd import QKDNode
 
 
@@ -37,22 +37,25 @@ class QKDNodeSUT(QKDNode):
 class TestQKDCommonFunctions(unittest.TestCase):
     def test_share_bases(self):
         cac = CACMock(expected_sent=[0, 0, 1, 1], received_data=[0, 1, 0, 1])
-        node = QKDNodeSUT(cac)
+        node = self.make_node(cac)
         node._qstates = [QState(1, 0), QState(1, 0), QState(0, 1), QState(1, 1)]
         node._share_bases()
         self.assertSequenceEqual([0, 1, 0, 1], node._other_bases)
         self.assertTrue(cac.send_was_called)
 
+    def make_node(self, cac):
+        return QKDNodeSUT(cac, 0)
+
     def test_share_n(self):
         cac = CACMock(expected_sent=42)
-        node = QKDNodeSUT(cac)
+        node = self.make_node(cac)
         node._send_q_states(42)
         self.assertTrue(cac.send_was_called)
 
     def test_send_test_set(self):
         random.seed(7)
         cac = CACMock(expected_sent=[0, 1, 2, 5, 6, 10, 13])
-        node = QKDNodeSUT(cac)
+        node = self.make_node(cac)
         node._qstates = [QState(1, 0)] * 15
         node._send_test_set()
         self.assertTrue(cac.send_was_called)
@@ -60,7 +63,7 @@ class TestQKDCommonFunctions(unittest.TestCase):
     def test_send_amplification_seed(self):
         random.seed(42)
         cac = CACMock(expected_sent=[0, 0, 1])
-        node = QKDNodeSUT(cac)
+        node = self.make_node(cac)
         node._qstates = [QState(1, 0), QState(1, 0), QState(0, 0), QState(1, 0), QState(0, 0)]
         node._test_set = {0, 2}
         node._send_seed()
@@ -69,7 +72,7 @@ class TestQKDCommonFunctions(unittest.TestCase):
 
     def test_send_acknowledgement(self):
         cac = CACMock()
-        node = QKDNodeSUT(cac)
+        node = self.make_node(cac)
         node._send_ack()
         self.assertTrue(cac.send_ack_was_called)
 
@@ -77,7 +80,7 @@ class TestQKDCommonFunctions(unittest.TestCase):
         self.assert_extract_bit(0, [1, 1, 1], [1, 1, 0])
 
     def assert_extract_bit(self, expected, x, seed):
-        node = QKDNodeSUT(None)
+        node = self.make_node(None)
         self.assertEqual(expected, node._extract_key(x, seed))
 
     def test_privacy_amplification_odd(self):
@@ -85,18 +88,18 @@ class TestQKDCommonFunctions(unittest.TestCase):
 
     def test_receive_seed(self):
         cac = CACMock(received_data=[1, 0, 1, 0])
-        node = QKDNodeSUT(cac)
+        node = self.make_node(cac)
         node._receive_seed()
         self.assertSequenceEqual([1, 0, 1, 0], node._seed)
 
     def test_receive_test_set(self):
         cac = CACMock(received_data=[0, 1])
-        node = QKDNodeSUT(cac)
+        node = self.make_node(cac)
         node._receive_test_set()
         self.assertEqual({0, 1}, node._test_set)
 
     def test_receive_acknowledgement(self):
         cac = CACMock()
-        node = QKDNodeSUT(cac)
+        node = self.make_node(cac)
         node._receive_ack()
         self.assertTrue(cac.receive_ack_was_called)

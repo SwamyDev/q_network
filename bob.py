@@ -1,5 +1,5 @@
 from QNetwork.bb84_qkd import BB84ReceiverNode
-from QNetwork.q_network import QChannel, CAChannel
+from QNetwork.q_network_impl import QChannel, CAChannel
 from SimulaQron.cqc.pythonLib.cqc import CQCConnection, qubit
 from tinyIpcLib.ipcCacClient import ipcCacClient
 
@@ -11,11 +11,11 @@ def main():
     node = BB84ReceiverNode(q_channel, ca_channel)
 
     node.share_q_states()
-    error = node.get_error()
-    print("Bob calculated error:", error)
-    if error == 0.0:
+    if not node.should_abort():
         k = node.generate_key()
         print("Bob generated key:", k)
+
+    print("Bob calculated error:", node.matching_error)
 
     connection.close()
 

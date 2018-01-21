@@ -1,15 +1,16 @@
-from QNetwork.q_network import QState
+from QNetwork.q_network_impl import QState
 from QNetwork.qkd import QKDNode
 
 
 class BB84Node(QKDNode):
-    def __init__(self, q_channel, ca_channel):
-        super().__init__(ca_channel)
+    def __init__(self, q_channel, ca_channel, error):
+        super().__init__(ca_channel, error)
         self.q_channel = q_channel
 
         self._test_values = []
         self._other_test_values = []
         self._seed = []
+        self.matching_error = 0
 
     def _send_q_states(self, amount):
         super()._send_q_states(amount)
@@ -37,14 +38,17 @@ class BB84Node(QKDNode):
     def _calculate_error(self):
         return self._calculate_matching_error_of_values(self._test_values, self._other_test_values)
 
+    def _is_outside_error_bound(self, matching_error):
+        return matching_error > self.error
+
     def _privacy_amplification(self):
         indices = set(range(len(self._qstates))) - self._test_set
         return self._calc_privacy_amplification_of(indices)
 
 
 class BB84SenderNode(BB84Node):
-    def __init__(self, q_channel, ca_channel, n):
-        super().__init__(q_channel, ca_channel)
+    def __init__(self, q_channel, ca_channel, error, n):
+        super().__init__(q_channel, ca_channel, error)
         self.n = n
 
     def share_q_states(self):
@@ -52,12 +56,13 @@ class BB84SenderNode(BB84Node):
         self._receive_ack()
         self._share_bases()
 
-    def get_error(self):
+    def should_abort(self):
         self._discard_states()
         self._send_test_set()
         self._send_test_values()
         self._receive_test_values()
-        return self._calculate_error()
+        self.matching_error = self._calculate_error()
+        return self._is_outside_error_bound(self.matching_error)
 
     def generate_key(self):
         self._send_seed()
@@ -65,20 +70,21 @@ class BB84SenderNode(BB84Node):
 
 
 class BB84ReceiverNode(BB84Node):
-    def __init__(self, q_channel, ca_channel):
-        super().__init__(q_channel, ca_channel)
+    def __init__(self, q_channel, ca_channel, error):
+        super().__init__(q_channel, ca_channel, error)
 
     def share_q_states(self):
         self._receive_q_states()
         self._send_ack()
         self._share_bases()
 
-    def get_error(self):
+    def should_abort(self):
         self._discard_states()
         self._receive_test_set()
         self._send_test_values()
         self._receive_test_values()
-        return self._calculate_error()
+        self.matching_error = self._calculate_error()
+        return self._is_outside_error_bound(self.matching_error)
 
     def generate_key(self):
         self._receive_seed()

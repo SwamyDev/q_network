@@ -4,11 +4,31 @@ from abc import ABC, abstractmethod
 
 
 class QKDNode(ABC):
-    def __init__(self, ca_channel):
+    def __init__(self, ca_channel, error):
         self.ca_channel = ca_channel
+        self.error = error
         self._qstates = []
         self._other_bases = []
         self._test_set = set()
+
+    def try_generate_key(self):
+        self.share_q_states()
+        if self.should_abort():
+            return []
+
+        return self.generate_key()
+
+    @abstractmethod
+    def share_q_states(self):
+        pass
+
+    @abstractmethod
+    def should_abort(self):
+        pass
+
+    @abstractmethod
+    def generate_key(self):
+        pass
 
     def _send_q_states(self, amount):
         self.ca_channel.send(amount)

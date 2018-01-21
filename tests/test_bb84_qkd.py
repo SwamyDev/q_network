@@ -1,7 +1,7 @@
 import unittest
 
 from QNetwork.bb84_qkd import BB84Node, BB84SenderNode, BB84ReceiverNode
-from QNetwork.q_network import QState
+from QNetwork.q_network_impl import QState
 
 
 class QChannelSpy:
@@ -38,11 +38,22 @@ class CACStub:
         return self.received
 
 
+class BB84NodeSUT(BB84Node):
+    def share_q_states(self):
+        pass
+
+    def should_abort(self):
+        pass
+
+    def generate_key(self):
+        pass
+
+
 class TestBB84Sending(unittest.TestCase):
     def setUp(self):
         self.qc = QChannelSpy()
         self.cac = CACSpy()
-        self.node = BB84Node(self.qc, self.cac)
+        self.node = BB84NodeSUT(self.qc, self.cac, 0)
 
     def test_send_bb84_states(self):
         self.node._send_q_states(42)
@@ -57,7 +68,7 @@ class TestBB84Sending(unittest.TestCase):
 
 class TestBB84Operations(unittest.TestCase):
     def setUp(self):
-        self.node = BB84Node(None, None)
+        self.node = BB84NodeSUT(None, None, 0)
 
     def test_discard_invalid_states(self):
         self.node._other_bases = [1, 1, 0, 0]
@@ -92,7 +103,7 @@ class TestBB84Receiving(unittest.TestCase):
     def setUp(self):
         self.qc = QChannelStub()
         self.cac = CACStub()
-        self.node = BB84Node(self.qc, self.cac)
+        self.node = BB84NodeSUT(self.qc, self.cac, 0)
 
     def test_receiving_q_states(self):
         self.cac.received = [3]
@@ -109,7 +120,7 @@ class TestBB84Receiving(unittest.TestCase):
 
 class BB84SenderNodeSpy(BB84SenderNode):
     def __init__(self):
-        super().__init__(None, None, None)
+        super().__init__(None, None, 0, 0)
         self.operations = []
 
     def _send_q_states(self, amount):
@@ -136,6 +147,9 @@ class BB84SenderNodeSpy(BB84SenderNode):
     def _calculate_error(self):
         self.operations.append("_calculate_error")
 
+    def _is_outside_error_bound(self, matching_error):
+        self.operations.append("_is_outside_error_bound")
+
     def _send_seed(self):
         self.operations.append("_send_seed")
 
@@ -151,10 +165,15 @@ class TestBB84SenderFlow(unittest.TestCase):
         self.node.share_q_states()
         self.assertSequenceEqual(["_send_q_states", "_receive_ack", "_share_bases"], self.node.operations)
 
-    def test_get_error(self):
-        self.node.get_error()
+    def test_should_abort(self):
+        self.node.should_abort()
         self.assertSequenceEqual(
-            ["_discard_states", "_send_test_set", "_send_test_values", "_receive_test_values", "_calculate_error"],
+            ["_discard_states",
+             "_send_test_set",
+             "_send_test_values",
+             "_receive_test_values",
+             "_calculate_error",
+             "_is_outside_error_bound"],
             self.node.operations)
 
     def test_generate_key(self):
@@ -164,7 +183,7 @@ class TestBB84SenderFlow(unittest.TestCase):
 
 class BB84ReceiverNodeSpy(BB84ReceiverNode):
     def __init__(self):
-        super().__init__(None, None)
+        super().__init__(None, None, 0)
         self.operations = []
 
     def _receive_q_states(self):
@@ -191,6 +210,9 @@ class BB84ReceiverNodeSpy(BB84ReceiverNode):
     def _calculate_error(self):
         self.operations.append("_calculate_error")
 
+    def _is_outside_error_bound(self, matching_error):
+        self.operations.append("_is_outside_error_bound")
+
     def _receive_seed(self):
         self.operations.append("_receive_seed")
 
@@ -206,10 +228,15 @@ class TestBB84ReceiverFlow(unittest.TestCase):
         self.node.share_q_states()
         self.assertSequenceEqual(["_receive_q_states", "_send_ack", "_share_bases"], self.node.operations)
 
-    def test_get_error(self):
-        self.node.get_error()
+    def test_should_abort(self):
+        self.node.should_abort()
         self.assertSequenceEqual(
-            ["_discard_states", "_receive_test_set", "_send_test_values", "_receive_test_values", "_calculate_error"],
+            ["_discard_states",
+             "_receive_test_set",
+             "_send_test_values",
+             "_receive_test_values",
+             "_calculate_error",
+             "_is_outside_error_bound"],
             self.node.operations)
 
     def test_generate_key(self):

@@ -179,9 +179,5 @@ class SecureChannel:
         return msg
 
 
-
-
-
-
 def open_channel(from_name, to_name):
     return SecureChannel(from_name, to_name)

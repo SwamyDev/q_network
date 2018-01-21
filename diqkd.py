@@ -7,9 +7,8 @@ from QNetwork.qkd import QKDNode
 
 class DIQKDNode(QKDNode):
     def __init__(self, q_channel, ca_channel, error):
-        super().__init__(ca_channel)
+        super().__init__(ca_channel, error)
         self.q_channel = q_channel
-        self.error = error
         self._chsh_test_set = set()
         self._match_test_set = set()
         self._raw_key_set = set()

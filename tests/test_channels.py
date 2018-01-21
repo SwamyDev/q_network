@@ -1,7 +1,7 @@
 import unittest
 from collections import deque
 
-from QNetwork.q_network import QState, QChannel, CAChannel
+from QNetwork.q_network_impl import QState, QChannel, CAChannel
 
 
 class QConnectionSpy:
