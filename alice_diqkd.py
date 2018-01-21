@@ -2,7 +2,7 @@ import operator
 import random
 
 from QNetwork.diqkd import DIQKDSenderNode
-from QNetwork.q_network_util import QChannel, CAChannel
+from QNetwork.q_network_impl import QChannel, CAChannel
 from SimulaQron.cqc.pythonLib.cqc import CQCConnection, qubit
 from tinyIpcLib.ipcCacClient import ipcCacClient
 
