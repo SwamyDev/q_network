@@ -1,6 +1,6 @@
 import unittest
 
-from QNetwork.q_network_impl import open_channel, START_KEY_GENERATION_TAG, END_KEY_GENERATION_TAG
+from QNetwork.q_network import START_KEY_GENERATION_TAG, END_KEY_GENERATION_TAG, SecureChannel
 
 
 class QChannelSpy:
@@ -87,7 +87,7 @@ class TestConnectionHandling(unittest.TestCase):
         self.q_channel = QChannelSpy()
         self.ca_channel = CAChannelSpy()
         self.channel_fac = ChannelFactorySpy(self.q_channel, self.ca_channel)
-        self.sc = open_channel('Alice', 'Bob')
+        self.sc = SecureChannel('Alice', 'Bob')
         self.sc.channel_factory = self.channel_fac
 
     def test_open_connection(self):
@@ -110,7 +110,7 @@ class TestConnectionHandling(unittest.TestCase):
 
 class TestMessageSending(unittest.TestCase):
     def setUp(self):
-        self.sc = open_channel('Alice', 'Bob')
+        self.sc = SecureChannel('Alice', 'Bob')
         self.cac = CAChannelSpy()
 
     def test_send_encrypted_message(self):
@@ -137,7 +137,7 @@ class TestMessageSending(unittest.TestCase):
 
 class TestMessageReceiving(unittest.TestCase):
     def setUp(self):
-        self.sc = open_channel('Alice', 'Bob')
+        self.sc = SecureChannel('Alice', 'Bob')
         self.start_tag = self.sc.to_binary_list(START_KEY_GENERATION_TAG)
         self.end_tag = self.sc.to_binary_list(END_KEY_GENERATION_TAG)
 
