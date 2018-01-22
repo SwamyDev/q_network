@@ -3,7 +3,7 @@ import json
 
 from QNetwork.bb84_qkd import BB84ReceiverNode, BB84SenderNode
 from QNetwork.diqkd import DIQKDSenderNode, DIQKDReceiverNode
-from QNetwork.q_network_impl import QChannel, CAChannel
+from QNetwork.q_network_channels import QChannel, CAChannel
 from SimulaQron.cqc.pythonLib.cqc import CQCConnection, qubit
 from tinyIpcLib.ipcCacClient import ipcCacClient
 

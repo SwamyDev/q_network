@@ -1,7 +1,7 @@
 import unittest
 
 from QNetwork.bb84_qkd import BB84Node, BB84SenderNode, BB84ReceiverNode
-from QNetwork.q_network_impl import QState
+from QNetwork.q_network_channels import QState
 
 
 class QChannelSpy:
