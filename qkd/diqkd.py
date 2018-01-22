@@ -2,7 +2,7 @@ import operator
 
 import math
 
-from QNetwork.qkd import QKDNode
+from QNetwork.qkd.qkd import QKDNode
 
 
 class DIQKDNode(QKDNode):

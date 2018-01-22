@@ -2,5 +2,5 @@
 
 ps aux | grep python | grep Test | awk {'print $2'} | xargs kill -9
 
-python alice_diqkd.py &
-python bob_diqkd.py &
+python examples/alice_diqkd.py &
+python examples/bob_diqkd.py &

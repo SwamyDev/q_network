@@ -1,5 +1,5 @@
 from QNetwork.q_network_channels import QState
-from QNetwork.qkd import QKDNode
+from QNetwork.qkd.qkd import QKDNode
 
 
 class BB84Node(QKDNode):

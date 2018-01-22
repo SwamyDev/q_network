@@ -1,7 +1,7 @@
 import operator
 import random
 
-from QNetwork.diqkd import DIQKDReceiverNode
+from QNetwork.qkd.diqkd import DIQKDReceiverNode
 from QNetwork.q_network_channels import QChannel, CAChannel
 from SimulaQron.cqc.pythonLib.cqc import CQCConnection, qubit
 from tinyIpcLib.ipcCacClient import ipcCacClient
@@ -32,7 +32,7 @@ def main_bkk():
 
     size = 1000
     for step in range(0, 2, 1):
-        step = 60
+        step = 40
 
         def trans(q):
             #q.H(print_info=False)

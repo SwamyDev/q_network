@@ -1,4 +1,4 @@
-from QNetwork.bb84_qkd import BB84SenderNode
+from QNetwork.qkd.bb84_qkd import BB84SenderNode
 from QNetwork.q_network_channels import QChannel, CAChannel
 from SimulaQron.cqc.pythonLib.cqc import CQCConnection, qubit
 from tinyIpcLib.ipcCacClient import ipcCacClient
