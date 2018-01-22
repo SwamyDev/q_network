@@ -18,6 +18,7 @@ class NetworkFactory:
             self.protocol = config['Protocol']
             self.error = config['Error']
             self.n = config['StateSize']
+            self.maximize_key_bits = config['MaximizeKeyBits']
 
     @staticmethod
     def make_q_channel(from_name, to_name):
@@ -30,7 +31,11 @@ class NetworkFactory:
         pass
 
     def make_sender_node(self, q_channel, ca_channel):
-        return SENDER_CLASSES[self.protocol](q_channel, ca_channel, self.error, self.n)
+        node = SENDER_CLASSES[self.protocol](q_channel, ca_channel, self.error, self.n)
+        node.maximize_key_bits = self.maximize_key_bits
+        return node
 
     def make_receiver_node(self, q_channel, ca_channel):
-        return RECEIVER_CLASSES[self.protocol](q_channel, ca_channel, self.error)
+        node = RECEIVER_CLASSES[self.protocol](q_channel, ca_channel, self.error)
+        node.maximize_key_bits = self.maximize_key_bits
+        return node

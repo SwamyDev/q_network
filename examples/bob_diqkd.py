@@ -31,16 +31,15 @@ def main_bkk():
     ca_channel = CAChannel(ipcCacClient('Bob'), 'Alice')
 
     size = 1000
-    for step in range(0, 2, 1):
-        step = 40
+    for step in range(24, 64, 8):
 
         def trans(q):
-            #q.H(print_info=False)
-            q.rot_Y(128+step, print_info=False)
+            q.rot_Y(step, print_info=False)
 
         def trans2(q):
             #q.H(print_info=False)
             q.rot_Y(step, print_info=False)
+            q.X(print_info=False)
 
         q_channel.bases_mapping = [trans, trans2]
         bases_lhs = [random.randint(0, 1) for _ in range(size)]

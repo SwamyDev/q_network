@@ -86,14 +86,41 @@ class TestQKDCommonFunctions(unittest.TestCase):
         self.assertTrue(cac.send_ack_was_called)
 
     def test_simple_extractor_returns_zero_bit(self):
-        self.assert_extract_bit(0, [1, 1, 1], [1, 1, 0])
+        self.assert_extracted_key([0], [1, 1, 1], [1, 1, 0], 1)
 
-    def assert_extract_bit(self, expected, x, seed):
+    def assert_extracted_key(self, expected, x, seed, k):
         node = self.make_node(None)
-        self.assertEqual(expected, node._extract_key(x, seed))
+        self.assertEqual(expected, node._extract_key(x, seed, k))
 
-    def test_privacy_amplification_odd(self):
-        self.assert_extract_bit(1, [1, 1, 1], [1, 1, 1])
+    def test_simple_extractor_returns_one_bit(self):
+        self.assert_extracted_key([1], [1, 1, 1], [1, 1, 1], 1)
+
+    def test_extract_multi_bit_key(self):
+        self.assert_extracted_key([1, 0, 0], [1, 0, 1, 0, 1, 1], [1, 1, 0, 0, 1, 1], 3)
+
+    def test_extraction_size_bigger_raw_key_raises_value_error(self):
+        node = self.make_node(None)
+        with self.assertRaises(ValueError) as cm:
+            node._extract_key([1, 1, 1], [1, 1, 1], 4)
+
+        ex = cm.exception
+        self.assertEqual("The requested key (4) is too long for the raw key (3).", ex.args[0])
+
+    def test_extract_single_bit_default(self):
+        node = self.make_node(None)
+        node._qstates = [QState(1, 0)] * 4
+        node._seed = [1, 1, 1]
+        key = node._calc_privacy_amplification_of({0, 1, 2})
+        self.assertEqual([1], key)
+
+    def test_maximize_key_bit_extraction_with_errors(self):
+        node = self.make_node(None)
+        node.maximize_key_bits = True
+        node._qstates = [QState(1, 0)] * 6
+        node._seed = [1] * 6
+        node._calculate_matching_error_of_values([1] * 6, [1, 1, 1, 0, 0, 0])
+        key = node._calc_privacy_amplification_of({0, 1, 2, 3, 4, 5})
+        self.assertEqual([0, 0, 0], key)
 
     def test_receive_seed(self):
         cac = CACMock(received_data=[1, 0, 1, 0])

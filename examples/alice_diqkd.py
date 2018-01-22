@@ -31,7 +31,7 @@ def main_bkk():
     ca_channel = CAChannel(ipcCacClient('Alice'), 'Bob')
 
     size = 1000
-    for step in range(0, 2, 1):
+    for step in range(24, 64, 8):
         bases_lhs = [random.randint(0, 1) for _ in range(size)]
         ca_channel.send(bases_lhs)
         bases_rhs = ca_channel.receive()
