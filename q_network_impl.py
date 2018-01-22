@@ -3,6 +3,10 @@ from functools import reduce
 START_KEY_GENERATION_TAG = "SKey"
 END_KEY_GENERATION_TAG = "EKey"
 
+IDLE = 0
+WRITING = 1
+READING = 2
+
 
 class SecureChannel:
     def __init__(self, from_name, to_name):
@@ -12,19 +16,30 @@ class SecureChannel:
         self.q_channel = None
         self.ca_channel = None
 
+        self._state = IDLE
+
     def __enter__(self):
         self.q_channel = self.network_factory.make_q_channel(self.from_name, self.to_name)
         self.ca_channel = self.network_factory.make_ca_channel(self.from_name, self.to_name)
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type is None:
-            self.ca_channel.clear()
+            if self._state is WRITING:
+                self.ca_channel.receive_ack()
+                self.ca_channel.clear()
+            elif self._state is READING:
+                self.ca_channel.send_ack()
+            else:
+                self.ca_channel.clear()
+
         else:
-            self.ca_channel.force_clear()
+            self.ca_channel.clear()
 
         self.q_channel.close()
 
     def write(self, data):
+        self._state = WRITING
         msg = self.to_binary_list(data)
         key = self.create_key(msg)
         enc_msg = [(m + k) % 2 for m, k in zip(msg, key)]
@@ -50,10 +65,11 @@ class SecureChannel:
         return key
 
     def read(self):
+        self._state = READING
         key = self.get_key()
         enc_msg = self.ca_channel.receive()
 
-        assert len(key) >= len(enc_msg), "Not enough key ({0}) to decode message of length {0}"\
+        assert len(key) >= len(enc_msg), "Not enough key ({0}) to decode message of length {1}"\
             .format(len(key), len(enc_msg))
 
         msg = [(m + k) % 2 for m, k in zip(enc_msg, key)]

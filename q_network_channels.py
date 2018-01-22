@@ -59,6 +59,9 @@ class QChannel:
 
         return self._measure_qubits_in_bases(from_received_epr, bases)
 
+    def close(self):
+        self._connection.close()
+
 
 class CAChannel:
     def __init__(self, connection, other):

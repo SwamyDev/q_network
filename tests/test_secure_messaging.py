@@ -1,6 +1,6 @@
 import unittest
 
-from QNetwork.q_network_impl import START_KEY_GENERATION_TAG, END_KEY_GENERATION_TAG, SecureChannel
+from QNetwork.q_network_impl import START_KEY_GENERATION_TAG, END_KEY_GENERATION_TAG, SecureChannel, READING
 
 
 class QChannelSpy:
@@ -15,18 +15,22 @@ class CAChannelSpy:
     def __init__(self):
         self.data_sent = None
         self.record = []
+        self.received_send_ack = False
+        self.received_receive_ack = False
         self.received_clear = False
-        self.received_force_clear = False
 
     def send(self, data):
         self.record.append(data)
         self.data_sent = data
 
+    def send_ack(self):
+        self.received_send_ack = True
+
+    def receive_ack(self):
+        self.received_receive_ack = True
+
     def clear(self):
         self.received_clear = True
-
-    def force_clear(self):
-        self.received_force_clear = True
 
 
 class NetworkFactorySpy:
@@ -43,6 +47,12 @@ class NetworkFactorySpy:
     def make_ca_channel(self, from_name, to_name):
         self.cac_from_to_names = (from_name, to_name)
         return self.ca_channel
+
+    def make_sender_node(self, q_channel, ca_channel):
+        return NodeStub([1])
+
+    def make_receiver_node(self, q_channel, ca_channel):
+        return NodeStub([1])
 
 
 class NetworkFactoryStub:
@@ -90,6 +100,9 @@ class TestConnectionHandling(unittest.TestCase):
         self.sc = SecureChannel('Alice', 'Bob')
         self.sc.network_factory = self.network_factory
 
+    def test_enter_returns_itself_as_context(self):
+        self.assertEqual(self.sc, self.sc.__enter__())
+
     def test_open_connection(self):
         self.sc.__enter__()
         self.assertEqual(('Alice', 'Bob'), self.network_factory.qc_from_to_names)
@@ -98,13 +111,31 @@ class TestConnectionHandling(unittest.TestCase):
     def test_normal_close_connection(self):
         self.sc.__enter__()
         self.sc.__exit__(None, None, None)
+        self.assertFalse(self.ca_channel.received_receive_ack)
+        self.assertFalse(self.ca_channel.received_send_ack)
         self.assertTrue(self.ca_channel.received_clear)
+        self.assertTrue(self.q_channel.received_close)
+
+    def test_after_write_wait_for_acknowledgement_before_closing(self):
+        self.sc.__enter__()
+        self.sc.write('H')
+        self.sc.__exit__(None, None, None)
+        self.assertTrue(self.ca_channel.received_receive_ack)
+        self.assertTrue(self.ca_channel.received_clear)
+        self.assertTrue(self.q_channel.received_close)
+
+    def test_after_read_send_acknowledgement_before_and_do_not_close_cac(self):
+        self.sc.__enter__()
+        self.sc._state = READING
+        self.sc.__exit__(None, None, None)
+        self.assertTrue(self.ca_channel.received_send_ack)
+        self.assertFalse(self.ca_channel.received_clear)
         self.assertTrue(self.q_channel.received_close)
 
     def test_exceptional_close_connection(self):
         self.sc.__enter__()
         self.sc.__exit__(ValueError, ValueError("Some Error"), None)
-        self.assertTrue(self.ca_channel.received_force_clear)
+        self.assertTrue(self.ca_channel.received_clear)
         self.assertTrue(self.q_channel.received_close)
 
 
@@ -148,6 +179,7 @@ class TestMessageReceiving(unittest.TestCase):
         self.sc.__enter__()
         msg = self.sc.read()
         self.assertEqual('H', msg)
+        self.assertEqual(READING, self.sc._state)
 
     def test_receive_multiple_key_generations(self):
         self.sc.network_factory = NetworkFactoryStub(None, CACStub(self.start_tag, self.start_tag, self.start_tag,
@@ -171,5 +203,3 @@ class TestMessageReceiving(unittest.TestCase):
         self.sc.__enter__()
         with self.assertRaises(AssertionError):
             msg = self.sc.read()
-
-
