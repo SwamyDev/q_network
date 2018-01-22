@@ -1,6 +1,6 @@
 import unittest
 
-from QNetwork.q_network import START_KEY_GENERATION_TAG, END_KEY_GENERATION_TAG, SecureChannel
+from QNetwork.q_network_impl import START_KEY_GENERATION_TAG, END_KEY_GENERATION_TAG, SecureChannel
 
 
 class QChannelSpy:
