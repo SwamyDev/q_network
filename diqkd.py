@@ -112,8 +112,8 @@ class DIQKDSenderNode(DIQKDNode):
 
 
 class DIQKDReceiverNode(DIQKDNode):
-    def __init__(self, q_channel, ca_channel, error, step):
-        q_channel.bases_mapping = [lambda q: q.rot_Y(128+step, print_info=False), lambda q: q.rot_Y(step, print_info=False), lambda q: None]
+    def __init__(self, q_channel, ca_channel, error):
+        q_channel.bases_mapping = [lambda q: q.rot_Y(128+60), lambda q: q.rot_Y(60), lambda q: None]
         super().__init__(q_channel, ca_channel, error)
 
     def _is_chsh_test(self, index):

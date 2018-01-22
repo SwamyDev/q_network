@@ -8,7 +8,7 @@ def main():
     connection = CQCConnection('Alice')
     q_channel = QChannel(connection, qubit, 'Eve')
     ca_channel = CAChannel(ipcCacClient('Alice'), 'Bob')
-    node = BB84SenderNode(q_channel, ca_channel, 1000)
+    node = BB84SenderNode(q_channel, ca_channel, 0, 1000)
 
     node.share_q_states()
     if not node.should_abort():

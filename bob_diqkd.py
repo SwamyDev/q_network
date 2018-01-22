@@ -24,17 +24,25 @@ def main():
     ca_channel.clear()
     connection.close()
 
+
 def main_bkk():
     connection = CQCConnection('Bob')
     q_channel = QChannel(connection, qubit, 'Alice')
     ca_channel = CAChannel(ipcCacClient('Bob'), 'Alice')
 
     size = 1000
-    for step in range(224, 256, 8):
+    for step in range(0, 2, 1):
+        step = 60
+
         def trans(q):
-            q.H(print_info=False)
+            #q.H(print_info=False)
+            q.rot_Y(128+step, print_info=False)
+
+        def trans2(q):
+            #q.H(print_info=False)
             q.rot_Y(step, print_info=False)
-        q_channel.bases_mapping = [trans, lambda q: q.rot_Y(step, print_info=False)]
+
+        q_channel.bases_mapping = [trans, trans2]
         bases_lhs = [random.randint(0, 1) for _ in range(size)]
         ca_channel.send(bases_lhs)
         bases_rhs = ca_channel.receive()
@@ -55,5 +63,6 @@ def main_bkk():
     ca_channel.receive_ack()
     ca_channel.clear()
     connection.close()
+
 
 main_bkk()

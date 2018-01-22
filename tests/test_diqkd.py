@@ -47,11 +47,22 @@ class QubitSpy:
         self.rotation_steps = step
 
 
+class DIQKDNodeSUT(DIQKDNode):
+    def share_q_states(self):
+        pass
+
+    def should_abort(self):
+        pass
+
+    def generate_key(self):
+        pass
+
+
 class TestDIQKDEntangledSharing(unittest.TestCase):
     def setUp(self):
         self.qc = QChannelSpy()
         self.cac = CACStub()
-        self.node = DIQKDNode(self.qc, self.cac, 0)
+        self.node = DIQKDNodeSUT(self.qc, self.cac, 0)
 
     def test_send_entangled_states(self):
         random.seed(42)
@@ -68,7 +79,7 @@ class TestDIQKDEntangledSharing(unittest.TestCase):
 class TestDIQKDSending(unittest.TestCase):
     def setUp(self):
         self.cac = CACSpy()
-        self.node = DIQKDNode(None, self.cac, 0)
+        self.node = DIQKDNodeSUT(None, self.cac, 0)
 
     def test_send_chsh_values(self):
         self.node._qstates = [QState(1, 0), QState(0, 1), QState(0, 0), QState(1, 1)]
@@ -87,7 +98,7 @@ class TestDIQKDSending(unittest.TestCase):
 
 class TestDIQKDCommonOperations(unittest.TestCase):
     def setUp(self):
-        self.node = DIQKDNode(None, None, 0.1)
+        self.node = DIQKDNodeSUT(None, None, 0.1)
 
     def test_calculate_win_probability(self):
         self.node._qstates = [QState(1, 0), QState(0, 1), QState(1, 1), QState(0, 1), QState(0, 0)]
@@ -152,11 +163,11 @@ class TestDIQKDReceiverOperations(unittest.TestCase):
     def test_has_correct_bases_mapping(self):
         q1 = QubitSpy()
         self.node.q_channel.bases_mapping[0](q1)
-        self.assertEqual(128+32, q1.rotation_steps)
+        self.assertEqual(128 + 60, q1.rotation_steps)
 
         q2 = QubitSpy()
         self.node.q_channel.bases_mapping[1](q2)
-        self.assertEqual(32, q2.rotation_steps)
+        self.assertEqual(60, q2.rotation_steps)
 
         q3 = QubitSpy()
         self.node.q_channel.bases_mapping[2](q3)
@@ -178,7 +189,7 @@ class TestDIQKDReceiverOperations(unittest.TestCase):
 class TestDIQKDReceiving(unittest.TestCase):
     def setUp(self):
         self.cac = CACStub()
-        self.node = DIQKDNode(None, self.cac, 0)
+        self.node = DIQKDNodeSUT(None, self.cac, 0)
 
     def test_receive_chsh_values(self):
         self.cac.received = [1, 1, 0, 0]

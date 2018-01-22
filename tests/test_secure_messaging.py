@@ -29,7 +29,7 @@ class CAChannelSpy:
         self.received_force_clear = True
 
 
-class ChannelFactorySpy:
+class NetworkFactorySpy:
     def __init__(self, q_channel, ca_channel):
         self.q_channel = q_channel
         self.ca_channel = ca_channel
@@ -45,7 +45,7 @@ class ChannelFactorySpy:
         return self.ca_channel
 
 
-class ChannelFactoryStub:
+class NetworkFactoryStub:
     def __init__(self, q_channel, ca_channel, node):
         self.q_channel = q_channel
         self.ca_channel = ca_channel
@@ -86,14 +86,14 @@ class TestConnectionHandling(unittest.TestCase):
     def setUp(self):
         self.q_channel = QChannelSpy()
         self.ca_channel = CAChannelSpy()
-        self.channel_fac = ChannelFactorySpy(self.q_channel, self.ca_channel)
+        self.network_factory = NetworkFactorySpy(self.q_channel, self.ca_channel)
         self.sc = SecureChannel('Alice', 'Bob')
-        self.sc.channel_factory = self.channel_fac
+        self.sc.network_factory = self.network_factory
 
     def test_open_connection(self):
         self.sc.__enter__()
-        self.assertEqual(('Alice', 'Bob'), self.channel_fac.qc_from_to_names)
-        self.assertEqual(('Alice', 'Bob'), self.channel_fac.cac_from_to_names)
+        self.assertEqual(('Alice', 'Bob'), self.network_factory.qc_from_to_names)
+        self.assertEqual(('Alice', 'Bob'), self.network_factory.cac_from_to_names)
 
     def test_normal_close_connection(self):
         self.sc.__enter__()
@@ -114,19 +114,19 @@ class TestMessageSending(unittest.TestCase):
         self.cac = CAChannelSpy()
 
     def test_send_encrypted_message(self):
-        self.sc.channel_factory = ChannelFactoryStub(None, self.cac, NodeStub([1, 1, 1, 1, 1, 1, 1, 1]))
+        self.sc.network_factory = NetworkFactoryStub(None, self.cac, NodeStub([1, 1, 1, 1, 1, 1, 1, 1]))
         self.sc.__enter__()
         self.sc.write("H")
         self.assertEqual([1, 0, 1, 1, 0, 1, 1, 1], self.cac.data_sent)
 
     def test_fill_up_key(self):
-        self.sc.channel_factory = ChannelFactoryStub(None, self.cac, NodeStub([1, 1, 1]))
+        self.sc.network_factory = NetworkFactoryStub(None, self.cac, NodeStub([1, 1, 1]))
         self.sc.__enter__()
         self.sc.write("H")
         self.assertEqual([1, 0, 1, 1, 0, 1, 1, 1], self.cac.data_sent)
 
     def test_inform_receiver_about_key_generation(self):
-        self.sc.channel_factory = ChannelFactoryStub(None, self.cac, NodeStub([1, 1, 1]))
+        self.sc.network_factory = NetworkFactoryStub(None, self.cac, NodeStub([1, 1, 1]))
         self.sc.__enter__()
         self.sc.write("H")
         self.assertEqual(self.sc.to_binary_list(START_KEY_GENERATION_TAG), self.cac.record[0])
@@ -142,15 +142,15 @@ class TestMessageReceiving(unittest.TestCase):
         self.end_tag = self.sc.to_binary_list(END_KEY_GENERATION_TAG)
 
     def test_receive_encrypted_message(self):
-        self.sc.channel_factory = ChannelFactoryStub(None, CACStub(self.start_tag, self.end_tag,
+        self.sc.network_factory = NetworkFactoryStub(None, CACStub(self.start_tag, self.end_tag,
                                                                    [1, 0, 1, 1, 0, 1, 1, 1]),
-                                                          NodeStub([1, 1, 1, 1, 1, 1, 1, 1]))
+                                                     NodeStub([1, 1, 1, 1, 1, 1, 1, 1]))
         self.sc.__enter__()
         msg = self.sc.read()
         self.assertEqual('H', msg)
 
     def test_receive_multiple_key_generations(self):
-        self.sc.channel_factory = ChannelFactoryStub(None, CACStub(self.start_tag, self.start_tag, self.start_tag,
+        self.sc.network_factory = NetworkFactoryStub(None, CACStub(self.start_tag, self.start_tag, self.start_tag,
                                                                    self.end_tag,
                                                                    [1, 0, 1, 1, 0, 1, 1, 1]), NodeStub([1, 1, 1]))
         self.sc.__enter__()
@@ -158,15 +158,15 @@ class TestMessageReceiving(unittest.TestCase):
         self.assertEqual('H', msg)
 
     def test_assert_key_generation_is_ended_properly(self):
-        self.sc.channel_factory = ChannelFactoryStub(None, CACStub(self.start_tag,
+        self.sc.network_factory = NetworkFactoryStub(None, CACStub(self.start_tag,
                                                                    [1, 0, 1, 1, 0, 1, 1, 1]),
-                                                          NodeStub([1, 1, 1, 1, 1, 1, 1, 1]))
+                                                     NodeStub([1, 1, 1, 1, 1, 1, 1, 1]))
         self.sc.__enter__()
         with self.assertRaises(AssertionError):
             msg = self.sc.read()
 
     def test_assert_that_there_is_enough_key(self):
-        self.sc.channel_factory = ChannelFactoryStub(None, CACStub(self.start_tag, self.end_tag,
+        self.sc.network_factory = NetworkFactoryStub(None, CACStub(self.start_tag, self.end_tag,
                                                                    [1, 0, 1, 1, 0, 1, 1, 1]), NodeStub([1, 1, 1]))
         self.sc.__enter__()
         with self.assertRaises(AssertionError):

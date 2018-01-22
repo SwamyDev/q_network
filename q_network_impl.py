@@ -85,16 +85,3 @@ class CAChannel:
 
     def close(self):
         self._connection.closeChannel()
-
-
-class ChannelFactory:
-    """
-    @staticmethod
-    def make_q_channel(from_name, to_name):
-        connection = CQCConnection(from_name)
-        return QChannel(connection, qubit, to_name)
-
-    @staticmethod
-    def make_ca_channel(from_name, to_name):
-        return CAChannel(ipcCacClient(from_name), to_name)
-    """
