@@ -30,6 +30,15 @@ class CACMock:
 
 
 class QKDNodeSUT(QKDNode):
+    def share_q_states(self):
+        pass
+
+    def should_abort(self):
+        pass
+
+    def generate_key(self):
+        pass
+
     def _measure_qstates(self, amount):
         pass
 
