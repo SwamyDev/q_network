@@ -63,7 +63,7 @@ class TestQKDCommonFunctions(unittest.TestCase):
 
     def test_send_test_set(self):
         random.seed(7)
-        cac = CACMock(expected_sent=[0, 1, 2, 5, 6, 10, 13])
+        cac = CACMock(expected_sent=[0, 1, 2, 5, 6, 8, 10])
         node = self.make_node(cac)
         node._qstates = [QState(1, 0)] * 15
         node._send_test_set()

@@ -52,10 +52,7 @@ class QKDNode(ABC):
     def _send_test_set(self):
         s = len(self._qstates)
         t = s // 2
-        self._test_set = set()
-        while len(self._test_set) < t:
-            self._test_set.add(random.randint(0, s - 1))
-
+        self._test_set = set(random.sample(range(0, s), t))
         self.ca_channel.send(list(self._test_set))
 
     def _send_seed(self):
