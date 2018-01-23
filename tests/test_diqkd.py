@@ -129,13 +129,13 @@ class TestDIQKDCommonOperations(unittest.TestCase):
         self.node._qstates = [QState(1, 0), QState(1, 0), QState(0, 0), QState(1, 0), QState(1, 0)]
         self.node._raw_key_set = {1, 3, 4}
         self.node._seed = [1, 1, 0]
-        self.assertEqual(0, self.node._privacy_amplification())
+        self.assertEqual([0], self.node._privacy_amplification())
 
     def test_privacy_amplification_odd(self):
         self.node._qstates = [QState(1, 0), QState(1, 0), QState(0, 0), QState(1, 0), QState(1, 0)]
         self.node._raw_key_set = {1, 3, 4}
         self.node._seed = [1, 1, 1]
-        self.assertEqual(1, self.node._privacy_amplification())
+        self.assertEqual([1], self.node._privacy_amplification())
 
 
 class TestDIQKDSenderOperations(unittest.TestCase):

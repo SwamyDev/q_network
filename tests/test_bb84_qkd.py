@@ -90,13 +90,13 @@ class TestBB84Operations(unittest.TestCase):
         self.node._qstates = [QState(1, 0), QState(1, 0), QState(0, 0), QState(1, 0), QState(1, 0)]
         self.node._test_set = {0, 2}
         self.node._seed = [1, 1, 0]
-        self.assertEqual(0, self.node._privacy_amplification())
+        self.assertEqual([0], self.node._privacy_amplification())
 
     def test_privacy_amplification_odd(self):
         self.node._qstates = [QState(1, 0), QState(1, 0), QState(0, 0), QState(1, 0), QState(1, 0)]
         self.node._test_set = {0, 2}
         self.node._seed = [1, 1, 1]
-        self.assertEqual(1, self.node._privacy_amplification())
+        self.assertEqual([1], self.node._privacy_amplification())
 
 
 class TestBB84Receiving(unittest.TestCase):

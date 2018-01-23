@@ -11,11 +11,11 @@ class QConnectionSpy:
         self.qubits = []
         self.epr_values = deque()
 
-    def sendQubit(self, qubit, receiver):
+    def sendQubit(self, qubit, receiver, print_info=True):
         self.receiver = receiver
         self.qubits.append(qubit)
 
-    def createEPR(self, receiver):
+    def createEPR(self, receiver, print_info=True):
         self.receiver = receiver
         q = self.qubit_factory(self)
         if len(self.epr_values) != 0:
@@ -63,19 +63,19 @@ class QubitSpy:
         self.operations = []
         self.value = value
 
-    def X(self):
+    def X(self, print_info=True):
         self.operations.append('X')
 
-    def Y(self):
+    def Y(self, print_info=True):
         self.operations.append('Y')
 
-    def Z(self):
+    def Z(self, print_info=True):
         self.operations.append('Z')
 
-    def H(self):
+    def H(self, print_info=True):
         self.operations.append('H')
 
-    def measure(self):
+    def measure(self, print_info=True):
         return self.value
 
 
@@ -97,11 +97,11 @@ class ConnectionStub:
     def received_qubits(self, value):
         self.qubits = value
 
-    def recvQubit(self):
+    def recvQubit(self, print_info=True):
         self.idx += 1
         return self.qubits[self.idx - 1]
 
-    def recvEPR(self):
+    def recvEPR(self, print_info=True):
         self.idx += 1
         return self.qubits[self.idx - 1]
 
