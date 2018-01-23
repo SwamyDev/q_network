@@ -10,6 +10,7 @@ def main():
     ca_channel = CAChannel(ipcCacClient('Bob'), 'Alice')
     node = BB84ReceiverNode(q_channel, ca_channel, 0)
 
+    # perform QKD protocol
     node.share_q_states()
     if not node.should_abort():
         k = node.generate_key()

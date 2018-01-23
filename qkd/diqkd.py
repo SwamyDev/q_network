@@ -87,6 +87,9 @@ class DIQKDNode(QKDNode):
 
 
 class DIQKDSenderNode(DIQKDNode):
+    """
+    Node object that handles sending of the DIQKD quantum key distribution protocol.
+    """
     def __init__(self, q_channel, ca_channel, error, n):
         super().__init__(q_channel, ca_channel, error)
         self.n = n
@@ -98,20 +101,39 @@ class DIQKDSenderNode(DIQKDNode):
         return self._other_bases[index] == 2 and self._qstates[index].basis == 0
 
     def share_q_states(self):
+        """
+        The sender implementation of DIQKD state sharing.
+            1. It prepares EPR-pairs sends one qubit to the receiver and measures its own.
+            2. Waits for acknowledgement of the receiver that it has received and measured the states.
+            3. Shares the bases used to measure its own qubit with the receiver.
+        """
         self._send_q_states(self.n)
         self._receive_ack()
         self._share_bases()
 
     def should_abort(self):
+        """
+        Calculates the winning probability of the CHSH game and the matching error in the channel. It then decides
+        whether to abort or not, dependent on the configured self.error parameter.
+        :return: True if the error exceeds specified bounds, False otherwise
+        """
         self._send_test_set()
         return self._perform_abort_test()
 
     def generate_key(self):
+        """
+        Generates key bits based on the produced raw key of QKD.
+        Generates a seed and sends it to the receiver. It then performs privacy amplification.
+        :return: integer list of extracted key bits ([0, 1, 1])
+        """
         self._send_seed()
         return self._privacy_amplification()
 
 
 class DIQKDReceiverNode(DIQKDNode):
+    """
+    Node object that handles receiving of the DIQKD quantum key distribution protocol.
+    """
     def __init__(self, q_channel, ca_channel, error):
         q_channel.bases_mapping = [lambda q: q.rot_Y(128+60), lambda q: q.rot_Y(60), lambda q: None]
         super().__init__(q_channel, ca_channel, error)
@@ -123,14 +145,30 @@ class DIQKDReceiverNode(DIQKDNode):
         return self._other_bases[index] == 0 and self._qstates[index].basis == 2
 
     def share_q_states(self):
+        """
+        The receiver implementation of DIQKD state sharing.
+            1. It retrieves the entangled qubits from the sender and measures them.
+            2. Sends an acknowledgement to the sender that it received and measured the states.
+            3. Shares the bases used for measurement with the sender.
+        """
         self._receive_q_states()
         self._send_ack()
         self._share_bases()
 
     def should_abort(self):
+        """
+        Calculates the winning probability of the CHSH game and the matching error in the channel. It then decides
+        whether to abort or not, dependent on the configured self.error parameter.
+        :return: True if the error exceeds specified bounds, False otherwise
+        """
         self._receive_test_set()
         return self._perform_abort_test()
 
     def generate_key(self):
+        """
+        Generates key bits based on the produced raw key of QKD.
+        Retrieves seed from the sender and then performs privacy amplification.
+        :return: integer list of extracted key bits ([0, 1, 1])
+        """
         self._receive_seed()
         return self._privacy_amplification()

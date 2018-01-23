@@ -16,6 +16,11 @@ class QKDNode(ABC):
         self._mismatching_states = 0
 
     def try_generate_key(self):
+        """
+        Performs a quantum key distribution protocol to try to generate shared key between sender and receiver
+        :return: An empty list [] if the protocol was unsuccessful (due to eaves dropping or noise) or
+                 An integer list (i.e.: [0, 1, 1]) of shared key
+        """
         self.share_q_states()
         if self.should_abort():
             return []

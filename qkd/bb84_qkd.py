@@ -47,16 +47,30 @@ class BB84Node(QKDNode):
 
 
 class BB84SenderNode(BB84Node):
+    """
+    Node object that handles sending of the BB84 quantum key distribution protocol.
+    """
     def __init__(self, q_channel, ca_channel, error, n):
         super().__init__(q_channel, ca_channel, error)
         self.n = n
 
     def share_q_states(self):
+        """
+        The sender implementation of BB84 state sharing.
+            1. It prepares and sends the BB84 states to the receiver.
+            2. Waits for acknowledgement of the receiver that it has received and measured the states
+            3. Shares the bases used for preparation with the receiver
+        """
         self._send_q_states(self.n)
         self._receive_ack()
         self._share_bases()
 
     def should_abort(self):
+        """
+        Calculates the matching error in the channel and decides whether to abort or not, dependent on the configured
+        self.error parameter
+        :return: True if the error exceeds specified bounds, False otherwise
+        """
         self._discard_states()
         self._send_test_set()
         self._send_test_values()
@@ -65,20 +79,39 @@ class BB84SenderNode(BB84Node):
         return self._is_outside_error_bound(self.matching_error)
 
     def generate_key(self):
+        """
+        Generates key bits based on the produced raw key of QKD.
+        Generates a seed and sends it to the receiver. It then performs privacy amplification.
+        :return: integer list of extracted key bits ([0, 1, 1])
+        """
         self._send_seed()
         return self._privacy_amplification()
 
 
 class BB84ReceiverNode(BB84Node):
+    """
+    Node object that handles receiving of the BB84 quantum key distribution protocol.
+    """
     def __init__(self, q_channel, ca_channel, error):
         super().__init__(q_channel, ca_channel, error)
 
     def share_q_states(self):
+        """
+        The receiver implementation of BB84 state sharing.
+            1. It retrieves the BB84 states from the sender and measures it.
+            2. Sends an acknowledgement to the sender that it received and measured the states.
+            3. Shares the bases used for measurement with the sender.
+        """
         self._receive_q_states()
         self._send_ack()
         self._share_bases()
 
     def should_abort(self):
+        """
+        Calculates the matching error in the channel and decides whether to abort or not, dependent on the configured
+        self.error parameter.
+        :return: True if the error exceeds specified bounds, False otherwise
+        """
         self._discard_states()
         self._receive_test_set()
         self._send_test_values()
@@ -87,5 +120,10 @@ class BB84ReceiverNode(BB84Node):
         return self._is_outside_error_bound(self.matching_error)
 
     def generate_key(self):
+        """
+        Generates key bits based on the produced raw key of QKD.
+        Retrieves seed from the sender and then performs privacy amplification.
+        :return: integer list of extracted key bits ([0, 1, 1])
+        """
         self._receive_seed()
         return self._privacy_amplification()
