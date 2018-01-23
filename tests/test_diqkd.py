@@ -42,9 +42,13 @@ class CACSpy:
 class QubitSpy:
     def __init__(self):
         self.rotation_steps = 0
+        self.received_Z = False
 
     def rot_Y(self, step):
         self.rotation_steps = step
+
+    def Z(self):
+        self.received_Z = True
 
 
 class DIQKDNodeSUT(DIQKDNode):
@@ -163,11 +167,12 @@ class TestDIQKDReceiverOperations(unittest.TestCase):
     def test_has_correct_bases_mapping(self):
         q1 = QubitSpy()
         self.node.q_channel.bases_mapping[0](q1)
-        self.assertEqual(128 + 60, q1.rotation_steps)
+        self.assertEqual(32, q1.rotation_steps)
 
         q2 = QubitSpy()
         self.node.q_channel.bases_mapping[1](q2)
-        self.assertEqual(60, q2.rotation_steps)
+        self.assertEqual(32, q2.rotation_steps)
+        self.assertTrue(q2.received_Z)
 
         q3 = QubitSpy()
         self.node.q_channel.bases_mapping[2](q3)

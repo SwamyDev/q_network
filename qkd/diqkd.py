@@ -90,6 +90,7 @@ class DIQKDSenderNode(DIQKDNode):
     """
     Node object that handles sending of the DIQKD quantum key distribution protocol.
     """
+
     def __init__(self, q_channel, ca_channel, error, n):
         super().__init__(q_channel, ca_channel, error)
         self.n = n
@@ -134,8 +135,16 @@ class DIQKDReceiverNode(DIQKDNode):
     """
     Node object that handles receiving of the DIQKD quantum key distribution protocol.
     """
+
     def __init__(self, q_channel, ca_channel, error):
-        q_channel.bases_mapping = [lambda q: q.rot_Y(128+60), lambda q: q.rot_Y(60), lambda q: None]
+        def basis_zero(q):
+            q.rot_Y(32)
+
+        def basis_one(q):
+            q.rot_Y(32)
+            q.Z()
+
+        q_channel.bases_mapping = [basis_zero, basis_one, lambda q: None]
         super().__init__(q_channel, ca_channel, error)
 
     def _is_chsh_test(self, index):
