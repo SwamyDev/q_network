@@ -1,0 +1,6 @@
+[submodule "tinyIpcLib"]
+	path = tinyIpcLib
+	url = https://github.com/uderos/tinyIpcLib.git
+[submodule "SimulaQron"]
+	path = SimulaQron
+	url = https://github.com/StephanieWehner/SimulaQron.git
