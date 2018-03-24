@@ -3,6 +3,10 @@ This project implements a method to perform secure communication using quantum k
 Tested on Ubuntu 16.04.3.
 For classical communication tinyIpcLib from fellow student uderos was used (https://github.com/uderos/tinyIpcLib).
 
+## Docker images:
+You can find a docker image of the project with all environment variables set up and dependencies installed here:
+https://hub.docker.com/r/swamydev/qnetwork/
+
 ## Running examples
 To run the exercise submission for the edx course perform the following steps:
 
