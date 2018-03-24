@@ -3,7 +3,7 @@ This project implements a method to perform secure communication using quantum k
 Tested on Ubuntu 16.04.3.
 For classical communication tinyIpcLib from fellow student uderos was used (https://github.com/uderos/tinyIpcLib).
 
-## Docker images:
+## Docker images
 You can find a docker image of the project with all environment variables set up and dependencies installed here:
 https://hub.docker.com/r/swamydev/qnetwork/
 
@@ -35,7 +35,7 @@ time pad, using the protocol specified in q_network.cfg. Currently only BB84 cou
 required larger n to work and the setup on which this implementation was tested on was too slow. Currently, the DIQKD
 implementation can be considered WIP or beeing in Alpha.
 
-## File contents:
+## File contents
 - QNetwork/examples/alice_q_network.py: Simple main sending a message to Bob
 - QNetwork/examples/bob_q_network.py: Simple receiving a message from Alice
 
