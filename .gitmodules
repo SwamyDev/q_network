@@ -4,3 +4,4 @@
 [submodule "SimulaQron"]
 	path = SimulaQron
 	url = https://github.com/StephanieWehner/SimulaQron.git
+	branch = BetaRelease
