@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/SwamyDev/q_network.svg?branch=master)](https://travis-ci.org/SwamyDev/q_network) [![Coverage Status](https://coveralls.io/repos/github/SwamyDev/q_network/badge.svg?branch=master)](https://coveralls.io/github/SwamyDev/q_network?branch=master)
 # QNetwork
 This project implements a method to perform secure communication using quantum key distribution.
 Tested on Ubuntu 16.04.3.
