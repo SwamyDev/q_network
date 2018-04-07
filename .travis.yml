@@ -9,5 +9,5 @@ install:
 before_script:
   - export PYTHONPATH=$PYTHONPATH:$(pwd)/QNetwork::$(pwd)/SimulaQron
 script:
-  - pytest QNetwork\tests
+  - pytest QNetwork/tests
   
