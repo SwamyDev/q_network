@@ -1,3 +1,4 @@
 twisted
 service_identity
 qutip
+pytest-cov==2.5.1

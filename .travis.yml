@@ -5,9 +5,11 @@ install:
   - pip install numpy
   - pip install cython 
   - pip install scipy
+  - pip install python-coveralls
   - pip install -r requirements.txt
 before_script:
   - export PYTHONPATH=$PYTHONPATH:$(pwd)/QNetwork::$(pwd)/SimulaQron
 script:
-  - pytest QNetwork/tests
-  
+  - pytest QNetwork/tests --cov=QNetwork --cov-report term-missing
+after_success:
+  - coveralls
